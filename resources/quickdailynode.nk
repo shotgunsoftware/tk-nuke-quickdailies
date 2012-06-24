@@ -1,0 +1,157 @@
+set cut_paste_input [stack 0]
+version 6.3 v7
+push $cut_paste_input
+Group {
+ name TankQuickDaily
+ note_font Verdana
+ selected true
+ xpos -338
+ ypos -49
+ mapsize {0.15 0.15}
+ addUserKnob {20 tanktab l "Tank Quick Daily"}
+ addUserKnob {26 "" +STARTLINE}
+ addUserKnob {22 doit l "Create Quick Daily" T "# have to gracefully support the case when \n# tank is not in the system at all!\nimport nuke\ntry:\n  app = nuke.tk_nuke_quickdailies\n  app.create_daily_v1(nuke.thisNode())\nexcept Exception, e:\n  nuke.warning(\"Could not render Tank Quickdaily! Most likely Tank is not currently active. Message: %s\" % e)\n\n\n" +STARTLINE}
+ addUserKnob {26 asd l "" +STARTLINE T "\nClicking the above button will create a quicktime and send it to Shotgun."}
+ addUserKnob {26 "" +STARTLINE}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 389
+  ypos 94
+ }
+ Text {
+  message "\{top_left\}"
+  size 48
+  yjustify top
+  Transform 1
+  box {{40 40} {"\[value root.height]-40" 1516} 840 1310}
+  name top_left_text
+  xpos 389
+  ypos 212
+ }
+ Text {
+  message "\[format %04d \[frame]]"
+  size 48
+  xjustify right
+  yjustify bottom
+  Transform 1
+  box {{"\[value root.width]-40" 2008} {40 40} 1208 240}
+  name framecounter
+  selected true
+  xpos 389
+  ypos 236
+ }
+ Text {
+  message "\{top_right\}\n"
+  size 48
+  xjustify right
+  yjustify top
+  Transform 1
+  box {{"\[value root.width]-40" 2008} {"\[value root.height]-40" 1516} 1200 1280}
+  name top_right_text
+  xpos 389
+  ypos 262
+ }
+ Text {
+  message ""
+  size 48
+  yjustify bottom
+  Transform 1
+  box {40 40 850 240}
+  name bottom_left_text
+  xpos 389
+  ypos 288
+ }
+ ColorWheel {
+  inputs 0
+  gamma 0.45
+  rotate 137
+  name ColorWheel1
+  xpos 260
+  ypos 141
+ }
+ Reformat {
+  type "to box"
+  box_width 300
+  name Reformat1
+  xpos 260
+  ypos 236
+ }
+ Transform {
+  translate {100 100}
+  name Transform
+  xpos 260
+  ypos 277
+ }
+ Constant {
+  inputs 0
+  name slate_base
+  xpos 171
+  ypos 142
+ }
+ Text {
+  message ""
+  size 100
+  leading 0.3
+  yjustify center
+  Transform 1
+  box {300 {"(\[value root.height]/2)-500" i} 1800 1389}
+  name slate_info
+  xpos 171
+  ypos 252
+ }
+ Merge {
+  inputs 2
+  name slate_merge
+  xpos 215
+  ypos 328
+ }
+ Switch {
+  inputs 2
+  which {{"\[python -execlocal first_frame\\ =\\ nuke.root().firstFrame()\\nlast_frame\\ =\\ nuke.root().lastFrame()\\ncurr_frame\\ =\\ nuke.root()\\\[\\\"frame\\\"\\].value()\\n\\nif\\ curr_frame\\ <\\ first_frame:\\n\\ \\ #\\ frames\\ before\\ the\\ start\\ of\\ the\\ sequence\\n\\ \\ #\\ switch\\ to\\ slate\\n\\ \\ ret\\ =\\ 0\\nelse:\\n\\ \\ #\\ play\\ back\\ sequence\\ with\\ burnins\\n\\ \\ ret\\ =\\ 1\\n\\n]" i x4 0 x1004 0 x1005 1}}
+  name slate_or_burnin_chooser
+  label "Switches to the slate if curr_frame < start_frame for the current scene."
+  xpos 389
+  ypos 347
+ }
+set N1475bfa0 [stack 0]
+ Reformat {
+  type "to box"
+  box_fixed true
+  black_outside true
+  name mov_reformat
+  xpos 309
+  ypos 414
+ }
+ Write {
+  name mov_writer
+  xpos 309
+  ypos 458
+  disable true
+ }
+ Output {
+  name Output1
+  xpos 309
+  ypos 501
+ }
+push $N1475bfa0
+ Reformat {
+  type "to box"
+  box_width 240
+  box_height 170
+  box_fixed true
+  black_outside true
+  name Reformat3
+  xpos 425
+  ypos 414
+ }
+ Write {
+  file_type png
+  checkHashOnRead false
+  name png_writer
+  xpos 425
+  ypos 457
+  disable true
+ }
+end_group
