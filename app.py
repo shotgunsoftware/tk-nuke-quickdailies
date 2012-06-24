@@ -17,6 +17,9 @@ import datetime
 PNG_THUMB_SEQUENCE_MARKER = "%08d"
 
 
+
+
+
 class NukeQuickDailies(tank.platform.Application):
     
     def init_app(self):
@@ -29,6 +32,7 @@ class NukeQuickDailies(tank.platform.Application):
         nuke.tk_nuke_quickdailies = self
         
         self._movie_template = self.get_template("movie_template")
+        self._snapshot_template = self.get_template("current_scene_template")
         
         # add to tank menu
         icon = os.path.join(self.disk_location, "resources", "node_icon.png")
@@ -180,12 +184,18 @@ class NukeQuickDailies(tank.platform.Application):
             png_out.knob('disable').setValue(True)
 
 
-    def _get_comments(self):
+    def _get_comments(self, name):
         """
         Get name and comments from user via UI
         """
-        return ("test", "comments hello")
-
+        # deferred import so that this app runs in batch mode
+        import tk_nuke_quickdailies
+        d = tk_nuke_quickdailies.CommentsPanel(name)        
+        result = d.showModalDialog()
+        if result:
+            return (d.get_name(), d.get_comments())
+        else:
+            return (None, None)
 
     def _produce_thumbnails(self, png_path):
         """
@@ -227,9 +237,20 @@ class NukeQuickDailies(tank.platform.Application):
         """
         Create daily. Version 1 of implementation.
         """
-
+        name = "Quickdaily"
+        
+        # now try to see if we are in a normal work file
+        # in that case deduce the name from it
+        curr_filename = nuke.root().name().replace("/", os.path.sep)
+        if self._snapshot_template.validate(curr_filename):
+            fields = self._snapshot_template.get_fields(curr_filename)
+            name = fields.get("name", "")
+        
         # get inputs
-        (name, message) = self._get_comments()
+        (name, message) = self._get_comments(name)
+        if name is None:
+            # cancel!
+            return
 
         # calculate the increment
         fields = self.context.as_template_fields(self._movie_template)
@@ -310,4 +331,7 @@ class NukeQuickDailies(tank.platform.Application):
     def destroy_app(self):
         self.log_debug("Destroying tk-nuke-publish")
                        
+
+
+
 
