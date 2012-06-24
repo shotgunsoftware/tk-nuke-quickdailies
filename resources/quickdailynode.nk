@@ -21,7 +21,7 @@ Group {
   ypos 94
  }
  Text {
-  message "\{top_left\}"
+  message ""
   size 48
   yjustify top
   Transform 1
@@ -43,7 +43,7 @@ Group {
   ypos 236
  }
  Text {
-  message "\{top_right\}\n"
+  message ""
   size 48
   xjustify right
   yjustify top
@@ -92,7 +92,7 @@ Group {
  }
  Text {
   message ""
-  size 100
+  size 60
   leading 0.3
   yjustify center
   Transform 1
@@ -119,6 +119,7 @@ set N1475bfa0 [stack 0]
  Reformat {
   type "to box"
   box_fixed true
+  resize fit
   black_outside true
   name mov_reformat
   xpos 309
@@ -141,6 +142,7 @@ push $N1475bfa0
   box_width 240
   box_height 170
   box_fixed true
+  resize fit
   black_outside true
   name Reformat3
   xpos 425

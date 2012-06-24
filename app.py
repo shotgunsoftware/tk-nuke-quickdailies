@@ -14,6 +14,9 @@ import os
 import tempfile
 import datetime
 
+PNG_THUMB_SEQUENCE_MARKER = "%08d"
+
+
 class NukeQuickDailies(tank.platform.Application):
     
     def init_app(self):
@@ -26,8 +29,6 @@ class NukeQuickDailies(tank.platform.Application):
         nuke.tk_nuke_quickdailies = self
         
         self._movie_template = self.get_template("movie_template")
-        
-        
         
         # add to tank menu
         icon = os.path.join(self.disk_location, "resources", "node_icon.png")
@@ -72,6 +73,19 @@ class NukeQuickDailies(tank.platform.Application):
         group_node.node("framecounter")["font"].setValue(font)
         group_node.node("slate_info")["font"].setValue(font)
         
+        # get some useful data
+        
+        # date -- format '23 Jan 2012' is universally understood.
+        today = datetime.date.today()
+        date_formatted = today.strftime("%d %b %Y")
+        
+        # current user
+        user_data = tank.util.get_shotgun_user(self.tank.shotgun)
+        if user_data is None:
+            user_name = "Unknown User"
+        else:
+            user_name = user_data.get("name", "Unknown User")        
+                
         # format the burnins  
         
         # top-left says 
@@ -83,20 +97,13 @@ class NukeQuickDailies(tank.platform.Application):
         group_node.node("top_left_text")["message"].setValue(top_left)
         
         # top-right has date
-        # format '23 Jan 2012' is universally understood.
-        today = datetime.date.today()
-        top_right = today.strftime("%d %b %Y")
-        group_node.node("top_right_text")["message"].setValue(top_right)
+        group_node.node("top_right_text")["message"].setValue(date_formatted)
         
         # bottom left says
         # Name#increment
         # User
-        bottom_left = "%s#%d\n" % (name, iteration)
-        user = tank.util.get_shotgun_user(self.tank.shotgun)
-        if user is None:
-            bottom_left += "Unknown User"
-        else:
-            bottom_left += user.get("name", "Unknown User")
+        bottom_left = "%s Iteration %d\n" % (name.capitalize(), iteration)
+        bottom_left += user_name
         group_node.node("bottom_left_text")["message"].setValue(bottom_left)
                 
         # and the slate
@@ -111,6 +118,8 @@ class NukeQuickDailies(tank.platform.Application):
             slate_str += "Step: %s\n" % self.context.step["name"]
         
         slate_str += "Frames: %s - %s\n" % (self._get_first_frame(), self._get_last_frame())
+        slate_str += "Date: %s\n" % date_formatted
+        slate_str += "User: %s\n" % user_name
         
         group_node.node("slate_info")["message"].setValue(slate_str)
 
@@ -178,6 +187,42 @@ class NukeQuickDailies(tank.platform.Application):
         return ("test", "comments hello")
 
 
+    def _produce_thumbnails(self, png_path):
+        """
+        Makes filmstrip thumbs and thumb.
+        Assumes that png_path has a PNG_THUMB_SEQUENCE_MARKER 
+        sequence indicator in the path (like %08d)
+        
+        returns (thumb_path, filmstrip_path)
+        """
+        start_frame = self._get_first_frame()
+        end_frame = self._get_last_frame()
+        
+        # first get static thumbnail
+        # middle frame is thumb
+        thumb_frame = (end_frame-start_frame) / 2 + start_frame
+        single_thumb_path = png_path.replace(PNG_THUMB_SEQUENCE_MARKER, PNG_THUMB_SEQUENCE_MARKER % thumb_frame)
+        if not os.path.exists(single_thumb_path):
+            single_thumb_path = None
+        
+        # now try to build film strip using the convert command
+        # convert img1.png img2.png img3.png +append output.png
+        filmstrip_thumb_path = tempfile.NamedTemporaryFile(suffix=".png", prefix="tankthumb", delete=False).name
+        
+        cmdline = ["convert"]
+        for x in range(start_frame, end_frame+1):
+            cmdline.append("\"%s\"" %  png_path.replace(PNG_THUMB_SEQUENCE_MARKER, PNG_THUMB_SEQUENCE_MARKER % x) )
+        cmdline.append("+append")
+        cmdline.append("\"%s\"" % filmstrip_thumb_path)
+        
+        cmd = " ".join(cmdline)
+        
+        if os.system(cmd) != 0:  
+            filmstrip_thumb_path = None
+        
+        return (single_thumb_path, filmstrip_thumb_path)
+        
+
     def create_daily_v1(self, group_node):
         """
         Create daily. Version 1 of implementation.
@@ -199,7 +244,7 @@ class NukeQuickDailies(tank.platform.Application):
         if len(iterations) == 0:
             new_iteration = 1
         else:
-            new_iteration = max(iterations)
+            new_iteration = max(iterations) + 1
         
         # compute new file path
         fields["iteration"] = new_iteration
@@ -215,19 +260,49 @@ class NukeQuickDailies(tank.platform.Application):
         
         # generate temp file for png sequence
         png_tmp_folder = tempfile.mkdtemp()
-        png_path = os.path.join(png_tmp_folder, "thumb_seq.%08d.png")
+        png_path = os.path.join(png_tmp_folder, "thumb_seq.%s.png" % PNG_THUMB_SEQUENCE_MARKER)
         
         # and render!
         self._render(group_node, mov_path, png_path)
 
-        # post process
+        # make thumbnails
+        (thumb, filmstrip) = self._produce_thumbnails(png_path)
 
-
+        # create sg version        
+        data = {
+            "code": "%s %s, %s, Iteration %s" % (self.context.entity["type"], 
+                                                self.context.entity["name"], 
+                                                name.capitalize(), 
+                                                new_iteration),
+            "description": message,
+            "project": self.context.project,
+            "entity": self.context.entity,
+            "sg_task": self.context.task,
+            "created_by": tank.util.get_shotgun_user(self.tank.shotgun),
+            "user": tank.util.get_shotgun_user(self.tank.shotgun),
+            "sg_path_to_movie": mov_path,
+            "sg_first_frame": self._get_first_frame(),
+            "sg_last_frame": self._get_last_frame(),
+            "frame_count": (self._get_last_frame() - self._get_first_frame()) + 1,
+            "frame_range": "%d-%d" % (self._get_first_frame(), self._get_last_frame()),
+            "sg_movie_has_slate": True
+        }
         
-
+        entity = self.shotgun.create("Version", data)
+        # and thumbnail
+        if thumb:
+            self.shotgun.upload_thumbnail("Version", entity["id"], thumb)
+        # and filmstrip
+        if filmstrip:
+            self.shotgun.upload_filmstrip_thumbnail("Version", entity["id"], filmstrip)
         
         # execute post hook
+        for h in self.get_setting("post_hooks", []):
+            self.app.execute_hook_by_name(h, mov_path=mov_path, version_id=entity["id"], comments=message)
         
+        # status message!
+        sg_url = "%s/detail/Version/%s" % (self.shotgun.base_url, entity["id"]) 
+        nuke.message("Quick Daily Completed!<br>Click <a href='%s'>here</a> to see it in Shotgun." % sg_url)
         
         
         
