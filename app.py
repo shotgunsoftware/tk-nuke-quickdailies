@@ -319,7 +319,7 @@ class NukeQuickDailies(tank.platform.Application):
         
         # execute post hook
         for h in self.get_setting("post_hooks", []):
-            self.app.execute_hook_by_name(h, mov_path=mov_path, version_id=entity["id"], comments=message)
+            self.execute_hook_by_name(h, mov_path=mov_path, version_id=entity["id"], comments=message)
         
         # status message!
         sg_url = "%s/detail/Version/%s" % (self.shotgun.base_url, entity["id"]) 

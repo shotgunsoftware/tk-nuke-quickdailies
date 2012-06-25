@@ -39,7 +39,8 @@ configuration:
             type: hook
             parameters: [mov_path, version_id, comments] 
         description: List of hooks that runs after a quickdaily has been rendered and 
-                     uploaded to Shotgun.
+                     uploaded to Shotgun. Parameters passed to the hook are 
+                     mov_path, version_id and comments.
        
 
 # the Shotgun fields that this app needs in order to operate correctly
