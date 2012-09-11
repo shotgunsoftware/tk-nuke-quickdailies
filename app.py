@@ -33,6 +33,7 @@ class NukeQuickDailies(tank.platform.Application):
         
         self._movie_template = self.get_template("movie_template")
         self._snapshot_template = self.get_template("current_scene_template")
+        self._version_template = self.get_template("sg_version_name_template")
         
         # add to tank menu
         icon = os.path.join(self.disk_location, "resources", "node_icon.png")
@@ -184,18 +185,18 @@ class NukeQuickDailies(tank.platform.Application):
             png_out.knob('disable').setValue(True)
 
 
-    def _get_comments(self, name):
+    def _get_comments(self, sg_version_name):
         """
         Get name and comments from user via UI
         """
         # deferred import so that this app runs in batch mode
         import tk_nuke_quickdailies
-        d = tk_nuke_quickdailies.CommentsPanel(name)        
+        d = tk_nuke_quickdailies.CommentsPanel(sg_version_name)        
         result = d.showModalDialog()
         if result:
-            return (d.get_name(), d.get_comments())
+            return d.get_comments()
         else:
-            return (None, None)
+            return None
 
     def _produce_thumbnails(self, png_path):
         """
@@ -242,19 +243,17 @@ class NukeQuickDailies(tank.platform.Application):
         # now try to see if we are in a normal work file
         # in that case deduce the name from it
         curr_filename = nuke.root().name().replace("/", os.path.sep)
+        version = 0
+        name = "Quickdaily"
         if self._snapshot_template.validate(curr_filename):
             fields = self._snapshot_template.get_fields(curr_filename)
             name = fields.get("name", "")
-        
-        # get inputs
-        (name, message) = self._get_comments(name)
-        if name is None:
-            # cancel!
-            return
+            version = fields.get("version", 0)
 
         # calculate the increment
         fields = self.context.as_template_fields(self._movie_template)
         fields["name"] = name
+        fields["version"] = version
         fields["iteration"] = 1
         
         # get all files
@@ -270,6 +269,15 @@ class NukeQuickDailies(tank.platform.Application):
         # compute new file path
         fields["iteration"] = new_iteration
         mov_path = self._movie_template.apply_fields(fields)
+        
+        # compute shotgun version name
+        sg_version_name = self._version_template.apply_fields(fields)
+        
+        # get inputs
+        message = self._get_comments(sg_version_name)
+        if message is None:
+            # user pressed cancel!
+            return
         
         # set metadata
         self._setup_formatting(group_node, name, new_iteration)
@@ -291,10 +299,7 @@ class NukeQuickDailies(tank.platform.Application):
 
         # create sg version        
         data = {
-            "code": "%s %s, %s, Iteration %s" % (self.context.entity["type"], 
-                                                self.context.entity["name"], 
-                                                name.capitalize(), 
-                                                new_iteration),
+            "code": sg_version_name,
             "description": message,
             "project": self.context.project,
             "entity": self.context.entity,
@@ -323,9 +328,7 @@ class NukeQuickDailies(tank.platform.Application):
         
         # status message!
         sg_url = "%s/detail/Version/%s" % (self.shotgun.base_url, entity["id"]) 
-        nuke.message("Quick Daily Completed!<br>Click <a href='%s'>here</a> to see it in Shotgun." % sg_url)
-        
-        
+        nuke.message("Your submission was successfully sent to review.")
         
         
     def destroy_app(self):

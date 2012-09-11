@@ -18,7 +18,7 @@ configuration:
     movie_template:
         type: template
         required_fields: [name, iteration]
-        optional_fields: []
+        optional_fields: [version]
         description: The location where the output quicktime will be written to. The two fields
                      name and iteration will be populated. Iteration is an integer number which 
                      will be automatically calculated based on the existing files on disk. Name
@@ -27,11 +27,20 @@ configuration:
     current_scene_template:
         type: template
         required_fields: [name]
-        optional_fields: "*"
-        description: Template that will be used to get the name of the current scene. The only 
-                     part of the file name that we are interested in is the name, so any other 
-                     fields that may be defined are irrelevant here.
+        optional_fields: [version]
+        description: Template that will be used to get the name of the current scene. This template
+                     needs to have at least on field denoting the name of the currently open scene.
+                     In addition to this, you can also define a version field which holds the 
+                     version current number for the currently open scene, if this exists.
                      
+    sg_version_name_template:
+        type: template
+        required_fields: [name, iteration]
+        optional_fields: [version]
+        description: "Template used to populate the version name in Shotgun. You can use any field 
+                     from the current context (such as for example Shot and Sequence), name, the 
+                     current iteration and the current version, if is defined."
+
     post_hooks:
         type: list
         allows_empty: true

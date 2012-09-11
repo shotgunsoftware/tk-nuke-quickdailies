@@ -14,16 +14,17 @@ from tank import TankError
 
 class CommentsPanel(nukescripts.PythonPanel):
     
-    def __init__(self, name):
+    def __init__(self, sg_version_name):
         super(CommentsPanel, self).__init__("Tank Quick Dailies" )
-        
-        # build UI        
-        self.addKnob(nuke.Text_Knob("info1", "", "Submission Name:"))
-        self._name = nuke.String_Knob("name", "", name)
-        self.addKnob(self._name)
 
-        self.addKnob(nuke.Text_Knob("info1", "", "Comments:"))
-        self._comments = nuke.Multiline_Eval_String_Knob("comment", "", "")
+        self.addKnob(nuke.Text_Knob("info1", "", "This will render a quicktime and send it to Shotgun for review."))
+        
+        self.addKnob(nuke.Text_Knob("div1", ""))
+
+        self.addKnob(nuke.Text_Knob("info1", "<b>Shotgun Name:</b>", "%s" % sg_version_name))
+        
+        self.addKnob(nuke.Text_Knob("div1", ""))
+        self._comments = nuke.Multiline_Eval_String_Knob("comment", "<b>Comments:</b>", "")
         self.addKnob(self._comments)
         
         self.addKnob(nuke.Text_Knob("div1", ""))
@@ -33,9 +34,6 @@ class CommentsPanel(nukescripts.PythonPanel):
         self.addKnob(self.okButton)
         self.cancelButton = nuke.Script_Knob("Cancel")
         self.addKnob(self.cancelButton)
-
-    def get_name(self):
-        return self._name.value()
 
     def get_comments(self):
         return self._comments.value()
