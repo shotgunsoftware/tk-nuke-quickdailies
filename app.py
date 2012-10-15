@@ -190,7 +190,7 @@ class NukeQuickDailies(tank.platform.Application):
         Get name and comments from user via UI
         """
         # deferred import so that this app runs in batch mode
-        import tk_nuke_quickdailies
+        tk_nuke_quickdailies = self.import_module("tk_nuke_quickdailies")
         d = tk_nuke_quickdailies.CommentsPanel(sg_version_name)        
         result = d.showModalDialog()
         if result:
