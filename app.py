@@ -284,8 +284,7 @@ class NukeQuickDailies(tank.platform.Application):
         
         # make sure folders exist for mov
         mov_folder = os.path.dirname(mov_path)
-        if not os.path.exists(mov_folder):
-            self.tank.execute_hook("create_folder", path=mov_folder)
+        self.ensure_folder_exists(mov_folder)
         
         # generate temp file for png sequence
         png_tmp_folder = tempfile.mkdtemp()
