@@ -15,7 +15,7 @@ from tank import TankError
 class CommentsPanel(nukescripts.PythonPanel):
     
     def __init__(self, sg_version_name):
-        super(CommentsPanel, self).__init__("Tank Quick Dailies" )
+        super(CommentsPanel, self).__init__("Shotgun: Quick Dailies" )
 
         self.addKnob(nuke.Text_Knob("info1", "", "This will render a quicktime and send it to Shotgun for review."))
         

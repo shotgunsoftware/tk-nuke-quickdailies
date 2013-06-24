@@ -37,13 +37,13 @@ class NukeQuickDailies(tank.platform.Application):
         
         # add to tank menu
         icon = os.path.join(self.disk_location, "resources", "node_icon.png")
-        self.engine.register_command("Tank Quick Dailies", 
+        self.engine.register_command("Shotgun Quick Dailies", 
                                       self.create_node, 
                                       {"type": "node", "icon": icon})
                       
     def create_node(self):
         """
-        Creates a tank quick dailies node
+        Creates a quick dailies node
         """
         nk_file = os.path.join(self.disk_location, "resources", "quickdailynode.nk")
         nk_file = nk_file.replace(os.sep, "/")
@@ -331,7 +331,7 @@ class NukeQuickDailies(tank.platform.Application):
         
         
     def destroy_app(self):
-        self.log_debug("Destroying tk-nuke-publish")
+        self.log_debug("Destroying tk-nuke-quickdailies")
                        
 
 
