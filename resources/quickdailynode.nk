@@ -2,7 +2,7 @@ set cut_paste_input [stack 0]
 version 6.3 v7
 push $cut_paste_input
 Group {
- name TankQuickDaily
+ name ShotgunQuickDaily
  note_font Verdana
  selected true
  xpos -338
