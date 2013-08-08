@@ -23,29 +23,25 @@ configuration:
         
     movie_template:
         type: template
-        required_fields: [name, iteration]
-        optional_fields: [version]
+        fields: context, iteration, [name], [version]
         description: The location where the output quicktime will be written to. The two fields
-                     name and iteration will be populated. Iteration is an integer number which 
-                     will be automatically calculated based on the existing files on disk. Name
-                     is typically derived from the name of the current scene.
+                     iteration and optionally name will be populated. Iteration is an integer 
+                     number which will be automatically calculated based on the existing files 
+                     on disk. Name is typically derived from the name of the current scene.
                      
     current_scene_template:
         type: template
-        required_fields: [name]
-        optional_fields: [version]
-        description: Template that will be used to get the name of the current scene. This template
-                     needs to have at least on field denoting the name of the currently open scene.
-                     In addition to this, you can also define a version field which holds the 
-                     version current number for the currently open scene, if this exists.
+        fields: context, [name], [version], *
+        description: Template that will be used to extract the name and version from the current 
+                     scene. Both name and version are optional.
                      
     sg_version_name_template:
         type: template
-        required_fields: [name, iteration]
-        optional_fields: [version]
+        fields: context, iteration, [version], [name], *
         description: "Template used to populate the version name in Shotgun. You can use any field 
-                     from the current context (such as for example Shot and Sequence), name, the 
-                     current iteration and the current version, if is defined."
+                     from the current context (such as for example Shot and Sequence) and the template
+                     must include iteration.  Additionally, name and the current version will be used 
+                     if they are defined."
 
     post_hooks:
         type: list
@@ -67,7 +63,7 @@ description: "A custom dailies node in Nuke that creates a quicktime and creates
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.12.14"
+requires_core_version: "v0.14.12"
 requires_engine_version: "v0.2.3"
 
 # the engines that this app can operate in:

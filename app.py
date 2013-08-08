@@ -114,14 +114,16 @@ class NukeQuickDailies(tank.platform.Application):
         # bottom left says
         # Name#increment
         # User
-        bottom_left = "%s Iteration %d\n" % (name.capitalize(), iteration)
+        bottom_left = "%s " % name.capitalize() if name else ""
+        bottom_left += ("Iteration %d\n" % (iteration))
         bottom_left += user_name
         group_node.node("bottom_left_text")["message"].setValue(bottom_left)
                 
         # and the slate
         slate_str =  "Project: %s\n" % self.context.project["name"]
         slate_str += "%s: %s\n" % (self.context.entity["type"], self.context.entity["name"])
-        slate_str += "Name: %s\n" % name
+        if name:
+            slate_str += "Name: %s\n" % name
         slate_str += "Iteration: %d\n" % iteration
         
         if self.context.task:
@@ -254,13 +256,15 @@ class NukeQuickDailies(tank.platform.Application):
         name = "Quickdaily"
         if self._snapshot_template.validate(curr_filename):
             fields = self._snapshot_template.get_fields(curr_filename)
-            name = fields.get("name", "")
-            version = fields.get("version", 0)
+            name = fields.get("name")
+            version = fields.get("version")
 
         # calculate the increment
         fields = self.context.as_template_fields(self._movie_template)
-        fields["name"] = name
-        fields["version"] = version
+        if name:
+            fields["name"] = name
+        if version != None:
+            fields["version"] = version
         fields["iteration"] = 1
         
         # get all files
