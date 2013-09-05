@@ -13,21 +13,36 @@
 # expected fields in the configuration file for this app
 configuration:
 
+    reviewsubmission_app_name:
+        type: str
+        description: >
+            The name of the reviewsubmission app instance to use. This review
+            submission app will provide quicktime creation functionality as well
+            as allow for controlling the settings of said quicktime. The app name
+            is required because many instances of the reviewsubmission app may
+            exist in your configuration, each of which may have different options.
+        
     width:
         type: int
-        description: The quicktime resolution width
+        description: >
+            The quicktime resolution width. Deprecated. Now uses the width from
+            the review submission app.
 
     height:
         type: int
-        description: The quicktime resolution height
-        
+        description: >
+            The quicktime resolution height. Deprecated. Now uses the height from
+            the review submission app.
+
     movie_template:
         type: template
         fields: context, iteration, [name], [version]
-        description: The location where the output quicktime will be written to. The two fields
-                     iteration and optionally name will be populated. Iteration is an integer 
-                     number which will be automatically calculated based on the existing files 
-                     on disk. Name is typically derived from the name of the current scene.
+        description: >
+            Deprecated. The movie path from the review submission app will be used.
+            The location where the output quicktime will be written to. The two fields
+            iteration and optionally name will be populated. Iteration is an integer 
+            number which will be automatically calculated based on the existing files 
+            on disk. Name is typically derived from the name of the current scene.
                      
     current_scene_template:
         type: template

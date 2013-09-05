@@ -10,7 +10,7 @@ Group {
  mapsize {0.15 0.15}
  addUserKnob {20 tanktab l "Shotgun Quick Daily"}
  addUserKnob {26 ""}
- addUserKnob {22 doit l "Create Quick Daily" T "# have to gracefully support the case when \n# Sgtk is not in the system at all or when \n# running an incompatible version of Sgtk.\nimport nuke\ntry:\n  app = nuke.tk_nuke_quickdailies\n  fn = app.create_daily_v1\nexcept Exception, e:\n  nuke.warning(\"Could not render Shotgun Quickdaily! Most likely Sgtk is not currently active. Message: %s\" % e)\nelse:\n  fn(nuke.thisNode())\n\n" +STARTLINE}
+ addUserKnob {22 doit l "Create Quick Daily" T "# have to gracefully support the case when \n# Sgtk is not in the system at all or when \n# running an incompatible version of Sgtk.\nimport nuke\ntry:\n  app = nuke.tk_nuke_quickdailies\n  fn = app.create_daily_v2\nexcept Exception, e:\n  nuke.warning(\"Could not render Shotgun Quickdaily! Most likely Sgtk is not currently active. Message: %s\" % e)\nelse:\n  fn(nuke.thisNode())\n\n" +STARTLINE}
  addUserKnob {26 asd l "" +STARTLINE T "\nClicking the above button will create a quicktime and send it to Shotgun."}
  addUserKnob {26 ""}
 }

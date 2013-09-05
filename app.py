@@ -21,7 +21,8 @@ import os
 import tempfile
 import datetime
 
-PNG_THUMB_SEQUENCE_MARKER = "%08d"
+PNG_THUMB_SEQUENCE_PADDING = 8
+PNG_THUMB_SEQUENCE_MARKER = "%%0%dd" % PNG_THUMB_SEQUENCE_PADDING
 
 
 
@@ -41,6 +42,7 @@ class NukeQuickDailies(tank.platform.Application):
         self._movie_template = self.get_template("movie_template")
         self._snapshot_template = self.get_template("current_scene_template")
         self._version_template = self.get_template("sg_version_name_template")
+        self._reviewsubmission_app_name = self.get_setting("reviewsubmission_app_name")
         
         # add to tank menu
         icon = os.path.join(self.disk_location, "resources", "node_icon.png")
@@ -139,7 +141,7 @@ class NukeQuickDailies(tank.platform.Application):
 
 
 
-    def _render(self, group_node, mov_path, png_path):
+    def _render_v1(self, group_node, mov_path, png_path):
         """
         Renders quickdaily node
         """
@@ -302,7 +304,7 @@ class NukeQuickDailies(tank.platform.Application):
         png_path = os.path.join(png_tmp_folder, "thumb_seq.%s.png" % PNG_THUMB_SEQUENCE_MARKER)
         
         # and render!
-        self._render(group_node, mov_path, png_path)
+        self._render_v1(group_node, mov_path, png_path)
 
         # make thumbnails
         (thumb, filmstrip) = self._produce_thumbnails(png_path)
@@ -345,6 +347,138 @@ class NukeQuickDailies(tank.platform.Application):
         self.log_debug("Destroying tk-nuke-quickdailies")
                        
 
+    def create_daily_v2(self, group_node):
+        """
+        Create daily.
 
+        Version 2 of implementation. This uses reviewsubmission helper app.
+        """
 
+        reviewsubmission_app = self.engine.apps.get(self._reviewsubmission_app_name)
+        if not reviewsubmission_app:
+            self.log_error("Could not find a review submission app named %s in your configuration!" % self._reviewsubmission_app_name)
+            return
 
+        # now try to see if we are in a normal work file
+        # in that case deduce the name from it
+        curr_filename = nuke.root().name().replace("/", os.path.sep)
+        version = 0
+        name = "Quickdaily"
+        if self._snapshot_template.validate(curr_filename):
+            fields = self._snapshot_template.get_fields(curr_filename)
+            name = fields.get("name")
+            version = fields.get("version")
+
+        # calculate the increment
+        movie_template = reviewsubmission_app.get_template("movie_path_template")
+        fields = self.context.as_template_fields(movie_template)
+        if name:
+            fields["name"] = name
+        if version != None:
+            fields["version"] = version
+        
+        # Figure out a new iteration number
+        files = self.tank.paths_from_template(movie_template, fields, ["iteration"])
+        iterations = [movie_template.get_fields(f).get("iteration") for f in files]
+        if len(iterations) == 0:
+            fields["iteration"] = 1
+        else:
+            fields["iteration"] = max(iterations) + 1
+        
+        # compute shotgun version name
+        sg_version_name = self._version_template.apply_fields(fields)
+        
+        # get inputs
+        message = self._get_comments(sg_version_name)
+        if message is None:
+            # user pressed cancel!
+            return
+                
+        # render frames
+        png_tmp_folder = tempfile.mkdtemp()
+        png_path = os.path.join(png_tmp_folder, "thumb_seq.%s.png" % PNG_THUMB_SEQUENCE_MARKER)
+        self._render_v2(reviewsubmission_app, group_node, png_path)
+
+        # make thumbnails
+        (thumb, filmstrip) = self._produce_thumbnails(png_path)
+
+        template = self._make_template(os.path.join(png_tmp_folder, "thumb_seq.{SEQ}.png"))
+        for key_name in [key.name for key in template.keys.values() if isinstance(key, tank.templatekey.SequenceKey)]:
+            fields[key_name] = "FORMAT: %d"
+        # Get our input path for frames to convert to movie
+        path = template.apply_fields(fields)
+        self.log_debug(path)
+
+        # Render movie
+        version = reviewsubmission_app.render_and_submit(
+            self._make_template(os.path.join(png_tmp_folder, "thumb_seq.{SEQ}.png")),
+            fields,
+            self._get_first_frame(),
+            self._get_last_frame(),
+            [],
+            self.context.task,
+            message,
+            thumb,
+            lambda p, s: self.log_info("%d%% complete: %s" % (p, s))
+        )
+
+        # TODO: Move this to the reviewsubmission app. The app should return a
+        # populated SG dictionary and populating the path to frames should be optional.
+        self.tank.shotgun.update("Version", version["id"], {"sg_path_to_frames": None})
+        version = self.tank.shotgun.find_one("Version", [["id", "is", version["id"]]], ["sg_path_to_movie"])
+
+        # execute post hook
+        for h in self.get_setting("post_hooks", []):
+            self.execute_hook_by_name(
+                h,
+                mov_path=version["sg_path_to_movie"],
+                version_id=version["id"],
+                comments=message
+            )
+
+        nuke.message("Your submission was successfully sent to review.")
+
+    def _render_v2(self, reviewsubmission_app, group_node, png_path):
+        """
+        Renders quickdaily node
+        """
+        # setup quicktime output resolution
+        width = reviewsubmission_app.get_setting("movie_width", 1024)
+        height = reviewsubmission_app.get_setting("movie_height", 540)        
+        reformat_node = group_node.node("Reformat3")
+        reformat_node["box_width"].setValue(width)
+        reformat_node["box_height"].setValue(height)
+        
+        # setup output png path
+        png_out = group_node.node("png_writer")
+        png_path = png_path.replace(os.sep, "/")
+        png_out["file"].setValue(png_path)
+        self.log_debug(png_path)
+        
+        # turn on the nodes        
+        png_out.knob('disable').setValue(False)
+
+        # finally render png sequence!
+        try:
+            first_view = nuke.views()[0]        
+            nuke.executeMultiple( [png_out], 
+                                  ([ self._get_first_frame()-1, self._get_last_frame(), 1 ],),
+                                  [first_view]
+                                  )
+        finally:            
+            # turn off the nodes again
+            png_out.knob('disable').setValue(True)
+
+    def _make_template(self, definition):
+        from tank import templatekey
+        from tank import template
+
+        data = self.tank.pipeline_configuration.get_templates_config()            
+        key_data = data.get("keys", {})
+        key_data["SEQ"]["format_spec"] = "0%d" % PNG_THUMB_SEQUENCE_PADDING
+        keys = templatekey.make_keys(key_data)
+        return template.make_template_paths(
+            {'definition': definition},
+            keys,
+            {"primary": "/"}
+        ).get('definition')
