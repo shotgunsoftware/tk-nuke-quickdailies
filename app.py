@@ -13,6 +13,7 @@ Quick versions to shotgun from Nuke
 
 """
 
+import copy
 import tank
 from tank import TankError
 import sys
@@ -395,31 +396,23 @@ class NukeQuickDailies(tank.platform.Application):
             return
                 
         # render frames
-        png_tmp_folder = tempfile.mkdtemp()
-        png_path = os.path.join(png_tmp_folder, "thumb_seq.%s.png" % PNG_THUMB_SEQUENCE_MARKER)
-        self._render_v2(reviewsubmission_app, group_node, png_path)
-
-        # make thumbnails
-        (thumb, filmstrip) = self._produce_thumbnails(png_path)
-
-        template = self._make_template(os.path.join(png_tmp_folder, "thumb_seq.{SEQ}.png"))
-        for key_name in [key.name for key in template.keys.values() if isinstance(key, tank.templatekey.SequenceKey)]:
-            fields[key_name] = "FORMAT: %d"
-        # Get our input path for frames to convert to movie
-        path = template.apply_fields(fields)
-        self.log_debug(path)
+        tmp_basename_template = self.get_template("tmp_render_basename")
+        tmp_path = self._compute_tmp_path(tmp_basename_template, fields)
+        self.log_debug(tmp_path)
+        self._render_v2(reviewsubmission_app, group_node, tmp_path)
 
         # Render movie
         version = reviewsubmission_app.render_and_submit(
-            self._make_template(os.path.join(png_tmp_folder, "thumb_seq.{SEQ}.png")),
+            tmp_basename_template,
             fields,
             self._get_first_frame(),
             self._get_last_frame(),
             [],
             self.context.task,
             message,
-            thumb,
-            lambda p, s: self.log_info("%d%% complete: %s" % (p, s))
+            self._produce_thumbnails_v2(tmp_path, tmp_basename_template, fields),
+            lambda p, s: self.log_info("%d%% complete: %s" % (p, s)),
+            local_source_folder=os.path.dirname(tmp_path)
         )
 
         # TODO: Move this to the reviewsubmission app. The app should return a
@@ -437,6 +430,18 @@ class NukeQuickDailies(tank.platform.Application):
             )
 
         nuke.message("Your submission was successfully sent to review.")
+
+    @staticmethod
+    def _compute_tmp_path(template, fields):
+        """
+        Compute a temporary path where Nuke can render the frames that will be
+        converted to movie and set to Shotgun.
+        """
+        fields = copy.deepcopy(fields)
+        tmp_folder = tempfile.mkdtemp()
+        for key_name in [key.name for key in template.keys.values() if isinstance(key, tank.templatekey.SequenceKey)]:
+            fields[key_name] = "FORMAT: %d"
+        return os.path.join(tmp_folder, template.apply_fields(fields))
 
     def _render_v2(self, reviewsubmission_app, group_node, png_path):
         """
@@ -469,16 +474,21 @@ class NukeQuickDailies(tank.platform.Application):
             # turn off the nodes again
             png_out.knob('disable').setValue(True)
 
-    def _make_template(self, definition):
-        from tank import templatekey
-        from tank import template
+    def _produce_thumbnails_v2(self, tmp_folder, template, fields):
+        start_frame = self._get_first_frame()
+        end_frame = self._get_last_frame()
+        fields = copy.deepcopy(fields)
+        
+        # first get static thumbnail - middle frame is thumb
+        thumb_frame = (end_frame-start_frame) / 2 + start_frame
+        for key_name in [key.name for key in template.keys.values() if isinstance(key, tank.templatekey.SequenceKey)]:
+            fields[key_name] = thumb_frame
 
-        data = self.tank.pipeline_configuration.get_templates_config()            
-        key_data = data.get("keys", {})
-        key_data["SEQ"]["format_spec"] = "0%d" % PNG_THUMB_SEQUENCE_PADDING
-        keys = templatekey.make_keys(key_data)
-        return template.make_template_paths(
-            {'definition': definition},
-            keys,
-            {"primary": "/"}
-        ).get('definition')
+        single_thumb_path = os.path.join(tmp_folder, template.apply_fields(fields))
+        if not os.path.exists(single_thumb_path):
+            single_thumb_path = None
+                
+        return single_thumb_path
+        
+
+

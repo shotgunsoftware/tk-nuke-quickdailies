@@ -21,7 +21,17 @@ configuration:
             as allow for controlling the settings of said quicktime. The app name
             is required because many instances of the reviewsubmission app may
             exist in your configuration, each of which may have different options.
-        
+    
+    tmp_render_basename:
+        type: template
+        fields: "[SEQ], *"
+        description: >
+            The basename of the temporary file that will be rendered from Nuke
+            and subsequently converted to a movie for upload to Shotgun. This file
+            will be rendered in a temporary folder on your local system before
+            movie conversion. Please note: this is a string template not a path
+            template.
+
     width:
         type: int
         description: >
