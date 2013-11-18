@@ -173,7 +173,7 @@ class NukeQuickDailies(tank.platform.Application):
 
         elif sys.platform == "linux2":
             mov_out["file_type"].setValue("ffmpeg")
-            mov_out["codec"].setValue("MOV format (mov)")
+            mov_out["format"].setValue("MOV format (mov)")
 
         # turn on the nodes        
         mov_out.knob('disable').setValue(False)
