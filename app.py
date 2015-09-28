@@ -162,7 +162,7 @@ class NukeQuickDailies(tank.platform.Application):
         mov_out["file"].setValue(mov_path)
         
         # apply the Write node codec settings we'll use for generating the Quicktime
-        self.execute_hook_method("quicktime_settings_hook", 
+        self.execute_hook_method("codec_settings_hook", 
                                  "get_quicktime_settings",
                                  write_node=mov_out)
 

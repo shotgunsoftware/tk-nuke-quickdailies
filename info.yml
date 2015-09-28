@@ -60,13 +60,11 @@ configuration:
                      uploaded to Shotgun. Parameters passed to the hook are 
                      mov_path, version_id and comments.
 
-    quicktime_settings_hook:
+    codec_settings_hook:
         type: hook
-        description: Called when generating the default settings for creating
-                     a Quicktime. The return value is a dictionary where the
-                     keys are knob names for the write node, and the values are
-                     the corresponding node values.
-        default_value: '{self}/quicktime_settings.py'
+        description: Hook for customizing codec settings used when generating quickdaily items
+                     for review.
+        default_value: '{self}/codec_settings.py'
        
 
 # the Shotgun fields that this app needs in order to operate correctly

@@ -9,7 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
-Hook that controls Quicktime settings when generating quick dailies for review
+Hook that controls codec settings when generating quick dailies for review
 """
 import sgtk
 import os
@@ -19,7 +19,7 @@ import nuke
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
-class QuicktimeSettings(HookBaseClass):
+class CodecSettings(HookBaseClass):
 
     def get_quicktime_settings(self, write_node, **kwargs):
         """
