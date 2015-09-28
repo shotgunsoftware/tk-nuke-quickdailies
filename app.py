@@ -161,19 +161,10 @@ class NukeQuickDailies(tank.platform.Application):
         mov_path = mov_path.replace(os.sep, "/")
         mov_out["file"].setValue(mov_path)
         
-        # on the mac and windows, we use the quicktime codec
-        # on linux, use ffmpeg
-        if sys.platform == "win32" or sys.platform == "darwin":
-            
-            # apple photo-jpeg movie
-            mov_out["file_type"].setValue('mov')
-            mov_out["codec"].setValue('jpeg')
-            mov_out["fps"].setValue(23.97599983)
-            mov_out["settings"].setValue("000000000000000000000000000019a7365616e0000000100000001000000000000018676696465000000010000000e00000000000000227370746c0000000100000000000000006a706567000000000018000003ff000000207470726c000000010000000000000000000000000017f9db00000000000000246472617400000001000000000000000000000000000000530000010000000100000000156d70736f00000001000000000000000000000000186d66726100000001000000000000000000000000000000187073667200000001000000000000000000000000000000156266726100000001000000000000000000000000166d70657300000001000000000000000000000000002868617264000000010000000000000000000000000000000000000000000000000000000000000016656e647300000001000000000000000000000000001663666c67000000010000000000000000004400000018636d66720000000100000000000000006170706c00000014636c75740000000100000000000000000000001c766572730000000100000000000000000003001c00010000")
-
-        elif sys.platform == "linux2":
-            mov_out["file_type"].setValue("ffmpeg")
-            mov_out["codec"].setValue("MOV format (mov)")
+        # apply the Write node codec settings we'll use for generating the Quicktime
+        self.execute_hook_method("codec_settings_hook", 
+                                 "get_quicktime_settings",
+                                 write_node=mov_out)
 
         # turn on the nodes        
         mov_out.knob('disable').setValue(False)
@@ -323,15 +314,21 @@ class NukeQuickDailies(tank.platform.Application):
             "frame_range": "%d-%d" % (self._get_first_frame(), self._get_last_frame()),
             "sg_movie_has_slate": True
         }
-        
-        entity = self.shotgun.create("Version", data)
-        # and thumbnail
+
+        # thumbnails and filmstrip thumbnails can be added at creation time to save time
         if thumb:
-            self.shotgun.upload_thumbnail("Version", entity["id"], thumb)
-        # and filmstrip
+            data["image"] = thumb
         if filmstrip:
-            self.shotgun.upload_filmstrip_thumbnail("Version", entity["id"], filmstrip)
+            data["filmstrip_image"] = filmstrip
+
+        entity = self.shotgun.create("Version", data)
+        self.log_debug("Version created in ShotgunL %s" % entity)
         
+        # upload the movie to Shotgun if desired
+        if self.get_setting("upload_movie", False):
+            self.log_debug("Uploading movie to Shotgun")
+            self.shotgun.upload("Version", entity["id"], mov_path, "sg_uploaded_movie")
+
         # execute post hook
         for h in self.get_setting("post_hooks", []):
             self.execute_hook_by_name(h, mov_path=mov_path, version_id=entity["id"], comments=message)
