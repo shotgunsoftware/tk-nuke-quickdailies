@@ -161,10 +161,10 @@ class NukeQuickDailies(tank.platform.Application):
         mov_path = mov_path.replace(os.sep, "/")
         mov_out["file"].setValue(mov_path)
         
-        # get the settings we'll use for generating the Quicktime
-        mov_settings = self.execute_hook("hook_nuke_quickdailies_quicktime_settings")
-        for setting_name, value in mov_settings.iteritems():
-            mov_out[setting_name].setValue(value)
+        # apply the Write node codec settings we'll use for generating the Quicktime
+        self.execute_hook_method("quicktime_settings_hook", 
+                                 "get_quicktime_settings",
+                                 write_node=mov_out)
 
         # turn on the nodes        
         mov_out.knob('disable').setValue(False)
@@ -314,15 +314,21 @@ class NukeQuickDailies(tank.platform.Application):
             "frame_range": "%d-%d" % (self._get_first_frame(), self._get_last_frame()),
             "sg_movie_has_slate": True
         }
-        
-        entity = self.shotgun.create("Version", data)
-        # and thumbnail
+
+        # thumbnails and filmstrip thumbnails can be added at creation time to save time
         if thumb:
-            self.shotgun.upload_thumbnail("Version", entity["id"], thumb)
-        # and filmstrip
+            data["image"] = thumb
         if filmstrip:
-            self.shotgun.upload_filmstrip_thumbnail("Version", entity["id"], filmstrip)
+            data["filmstrip_image"] = filmstrip
+
+        entity = self.shotgun.create("Version", data)
+        self.log_debug("Version created in ShotgunL %s" % entity)
         
+        # upload the movie to Shotgun if desired
+        if self.get_setting("upload_movie", False):
+            self.log_debug("Uploading movie to Shotgun")
+            self.shotgun.upload("Version", entity["id"], mov_path, "sg_uploaded_movie")
+
         # execute post hook
         for h in self.get_setting("post_hooks", []):
             self.execute_hook_by_name(h, mov_path=mov_path, version_id=entity["id"], comments=message)

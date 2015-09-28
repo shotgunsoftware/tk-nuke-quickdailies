@@ -43,6 +43,13 @@ configuration:
                      must include iteration.  Additionally, name and the current version will be used 
                      if they are defined."
 
+    upload_movie:
+        type: bool
+        description: If true, the Quicktime movie will be uploaded to Shotgun in the Version's 
+                     sg_uploaded_movie field which will allow the Version to be viewed in the 
+                     Shotgun web player.
+        default_value: false
+
     post_hooks:
         type: list
         allows_empty: true
@@ -53,13 +60,13 @@ configuration:
                      uploaded to Shotgun. Parameters passed to the hook are 
                      mov_path, version_id and comments.
 
-    hook_nuke_quickdailies_quicktime_settings:
+    quicktime_settings_hook:
         type: hook
-        description: "Called when generating the default settings for creating
+        description: Called when generating the default settings for creating
                      a Quicktime. The return value is a dictionary where the
                      keys are knob names for the write node, and the values are
-                     the corresponding node values."
-        default_value: nuke_quickdailies_quicktime_settings
+                     the corresponding node values.
+        default_value: '{self}/quicktime_settings.py'
        
 
 # the Shotgun fields that this app needs in order to operate correctly
