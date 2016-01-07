@@ -92,7 +92,7 @@ class NukeQuickDailies(tank.platform.Application):
         date_formatted = today.strftime("%d %b %Y")
         
         # current user
-        user_data = tank.util.get_shotgun_user(self.tank.shotgun)
+        user_data = tank.util.get_current_user(self.tank)
         if user_data is None:
             user_name = "Unknown User"
         else:
@@ -305,8 +305,8 @@ class NukeQuickDailies(tank.platform.Application):
             "project": self.context.project,
             "entity": self.context.entity,
             "sg_task": self.context.task,
-            "created_by": tank.util.get_shotgun_user(self.tank.shotgun),
-            "user": tank.util.get_shotgun_user(self.tank.shotgun),
+            "created_by": tank.util.get_current_user(self.tank),
+            "user": tank.util.get_current_user(self.tank),
             "sg_path_to_movie": mov_path,
             "sg_first_frame": self._get_first_frame(),
             "sg_last_frame": self._get_last_frame(),
