@@ -47,6 +47,13 @@ class NukeQuickDailies(tank.platform.Application):
         self.engine.register_command("Shotgun Quick Dailies", 
                                       self.create_node, 
                                       {"type": "node", "icon": icon})
+
+    @property
+    def context_change_allowed(self):
+        """
+        Specifies that context changes are allowed.
+        """
+        return True
                       
     def create_node(self):
         """
