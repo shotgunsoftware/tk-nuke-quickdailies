@@ -36,6 +36,7 @@ class CodecSettings(HookBaseClass):
                 # Nuke 9.0v1 changed the codec knob name to meta_codec and added an encoder knob
                 # (which defaults to the new mov64 encoder/decoder).                  
                 write_node["meta_codec"].setValue("jpeg")
+                write_node["mov64_quality_max"].setValue("3")
             else:
                 write_node["codec"].setValue("jpeg")
             write_node["fps"].setValue(23.97599983)
@@ -47,6 +48,7 @@ class CodecSettings(HookBaseClass):
                 # http://help.thefoundry.co.uk/nuke/9.0/#appendices/appendixc/supported_file_formats.html
                 write_node["file_type"].setValue("mov64")
                 write_node["mov64_codec"].setValue("jpeg")
+                write_node["mov64_quality_max"].setValue("3")
             else:
                 # the 'codec' knob name was changed to 'format' in Nuke 7
                 write_node["file_type"].setValue("ffmpeg")
