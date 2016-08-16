@@ -63,6 +63,17 @@ class NukeQuickDailies(tank.platform.Application):
         nk_file = nk_file.replace(os.sep, "/")
         nuke.nodePaste(nk_file)
 
+    def post_context_change(self, old_context, new_context):
+        """
+        Runs after a context change has completed.
+
+        :param old_context: The sgtk.context.Context being switched from.
+        :param new_context: The sgtk.context.Context being switched to.
+        """
+        self._movie_template = self.get_template("movie_template")
+        self._snapshot_template = self.get_template("current_scene_template")
+        self._version_template = self.get_template("sg_version_name_template")
+
     # callbacks! note that if the behaviour changes, we need to version up these methods
     # we must support all older versions of nodes that may remain inside of scenes.
 
