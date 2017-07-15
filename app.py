@@ -108,9 +108,10 @@ class NukeQuickDailies(tank.platform.Application):
         # top-left says 
         # Project XYZ
         # Shot ABC
-        top_left = "%s\n%s %s" % (self.context.project["name"], 
-                                  self.context.entity["type"], 
-                                  self.context.entity["name"])
+        top_left = "%s" % self.context.project["name"]
+        if self.context.entity:
+            top_left += "\n%s %s" % (self.context.entity["type"], self.context.entity["name"])
+
         group_node.node("top_left_text")["message"].setValue(top_left)
         
         # top-right has date
@@ -124,7 +125,8 @@ class NukeQuickDailies(tank.platform.Application):
                 
         # and the slate
         slate_str = "Project: %s\n" % self.context.project["name"]
-        slate_str += "%s: %s\n" % (self.context.entity["type"], self.context.entity["name"])
+        if self.context.entity:
+            slate_str += "%s: %s\n" % (self.context.entity["type"], self.context.entity["name"])
         slate_str += "Name: %s\n" % sg_version_name
 
         if self.context.task:
