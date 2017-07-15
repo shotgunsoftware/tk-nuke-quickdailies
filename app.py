@@ -123,12 +123,10 @@ class NukeQuickDailies(tank.platform.Application):
         group_node.node("bottom_left_text")["message"].setValue(bottom_left)
                 
         # and the slate
-        slate_str =  "Project: %s\n" % self.context.project["name"]
+        slate_str = "Project: %s\n" % self.context.project["name"]
         slate_str += "%s: %s\n" % (self.context.entity["type"], self.context.entity["name"])
-        if name:
-            slate_str += "Name: %s\n" % name
-        slate_str += "Iteration: %d\n" % iteration
-        
+        slate_str += "Name: %s\n" % sg_version_name
+
         if self.context.task:
             slate_str += "Task: %s\n" % self.context.task["name"]
         elif self.context.step:
@@ -202,7 +200,7 @@ class NukeQuickDailies(tank.platform.Application):
         # now try to see if we are in a normal work file
         # in that case deduce the name from it
         current_scene_path = nuke.root().name()
-        if current_scene_path:
+        if current_scene_path and current_scene_path != "Root":
             current_scene_path = current_scene_path.replace("/", os.path.sep)
             # get just filename
             current_scene_name = os.path.basename(current_scene_path)
@@ -211,7 +209,7 @@ class NukeQuickDailies(tank.platform.Application):
             name = current_scene_name
 
         # append date and time
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.datetime.now().strftime("%d %b %Y %H:%M:%S")
         timestamp_filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         sg_version_name = "%s %s" % (name, timestamp)
