@@ -13,52 +13,14 @@
 # expected fields in the configuration file for this app
 configuration:
 
-    width:
-        type: int
-        description: The quicktime resolution width
-
-    height:
-        type: int
-        description: The quicktime resolution height
-        
-    movie_template:
-        type: template
-        fields: context, iteration, [name], [version]
-        description: The location where the output quicktime will be written to. The two fields
-                     iteration and optionally name will be populated. Iteration is an integer 
-                     number which will be automatically calculated based on the existing files 
-                     on disk. Name is typically derived from the name of the current scene.
-                     
-    current_scene_template:
-        type: template
-        fields: context, [name], [version], *
-        description: Template that will be used to extract the name and version from the current 
-                     scene. Both name and version are optional.
-                     
-    sg_version_name_template:
-        type: template
-        fields: context, iteration, [version], [name], *
-        description: "Template used to populate the version name in Shotgun. You can use any field 
-                     from the current context (such as for example Shot and Sequence) and the template
-                     must include iteration.  Additionally, name and the current version will be used 
-                     if they are defined."
-
-    upload_movie:
-        type: bool
-        description: If true, the Quicktime movie will be uploaded to Shotgun in the Version's 
-                     sg_uploaded_movie field which will allow the Version to be viewed in the 
-                     Shotgun web player.
-        default_value: true
-
     post_hooks:
         type: list
         allows_empty: true
         values:
             type: hook
-            parameters: [mov_path, version_id, comments] 
         description: List of hooks that runs after a quickdaily has been rendered and 
-                     uploaded to Shotgun. Parameters passed to the hook are 
-                     mov_path, version_id and comments.
+                     uploaded to Shotgun. Parameter passed to the hook is
+                     version_id.
 
     codec_settings_hook:
         type: hook
