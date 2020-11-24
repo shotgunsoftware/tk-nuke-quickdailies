@@ -3,5 +3,12 @@ The nuke-quickdailies app uses the following software. Thanks to their creators,
 ============================== Liberation Fonts ==============================
 
 1. The Liberation(tm) version 2.00.0 onward are Licensed under the SIL Open Font License, Version 1.1.
-2. Older versions of the Liberation(tm) Fonts is released as open source under the GNU General Public 
+2. Older versions of the Liberation(tm) Fonts is released as open source under the GNU General Public
 License version 2 with exceptions. ​https://fedoraproject.org/wiki/Licensing/LiberationFontLicense
+
+Copyright © 2007 Red Hat, Inc. All rights reserved. LIBERATION is a trademark of Red Hat, Inc.
+
+Liberation Fonts is licensed under the GNU  General Public License v.2, which can be found at
+ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html .
+You can obtain a text copy of this license and the source code for Liberation Fonts (and modifications made by Autodesk,
+ if any) from www.autodesk.com/lgplsource.
